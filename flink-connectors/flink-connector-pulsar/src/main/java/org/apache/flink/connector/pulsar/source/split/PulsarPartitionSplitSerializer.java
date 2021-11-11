@@ -19,8 +19,8 @@
 package org.apache.flink.connector.pulsar.source.split;
 
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import org.apache.pulsar.client.api.MessageId;

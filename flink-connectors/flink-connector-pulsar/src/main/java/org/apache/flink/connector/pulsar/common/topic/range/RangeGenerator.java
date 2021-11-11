@@ -16,13 +16,13 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.pulsar.source.enumerator.topic.range;
+package org.apache.flink.connector.pulsar.common.topic.range;
 
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.pulsar.source.config.SourceConfiguration;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicMetadata;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange;
+import org.apache.flink.connector.pulsar.common.topic.TopicMetadata;
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
 
 import org.apache.pulsar.client.api.KeySharedPolicy;
 import org.apache.pulsar.client.api.SubscriptionType;

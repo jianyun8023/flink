@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.pulsar.source.enumerator.topic;
+package org.apache.flink.connector.pulsar.common.topic;
 
 import org.apache.flink.annotation.Internal;
 

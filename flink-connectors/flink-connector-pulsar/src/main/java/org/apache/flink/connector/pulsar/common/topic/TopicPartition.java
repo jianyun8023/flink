@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.pulsar.source.enumerator.topic;
+package org.apache.flink.connector.pulsar.common.topic;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
@@ -27,8 +27,6 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import java.io.Serializable;
 import java.util.Objects;
 
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicNameUtils.topicName;
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicNameUtils.topicNameWithPartition;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
@@ -59,7 +57,7 @@ public class TopicPartition implements Serializable {
     private final TopicRange range;
 
     public TopicPartition(String topic, int partitionId, TopicRange range) {
-        this.topic = topicName(checkNotNull(topic));
+        this.topic = TopicNameUtils.topicName(checkNotNull(topic));
         this.partitionId = partitionId;
         this.range = checkNotNull(range);
     }
@@ -78,7 +76,7 @@ public class TopicPartition implements Serializable {
      */
     public String getFullTopicName() {
         if (partitionId >= 0) {
-            return topicNameWithPartition(topic, partitionId);
+            return TopicNameUtils.topicNameWithPartition(topic, partitionId);
         } else {
             return topic;
         }

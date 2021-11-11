@@ -21,8 +21,8 @@ package org.apache.flink.connector.pulsar.source.enumerator.subscriber;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.pulsar.source.enumerator.subscriber.impl.TopicListSubscriber;
 import org.apache.flink.connector.pulsar.source.enumerator.subscriber.impl.TopicPatternSubscriber;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.RangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.range.RangeGenerator;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.RegexSubscriptionMode;

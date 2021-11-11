@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.pulsar.source.split;
 
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
 
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.transaction.TxnID;

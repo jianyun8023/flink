@@ -28,10 +28,10 @@ import org.apache.flink.connector.pulsar.common.config.PulsarOptions;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StartCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.subscriber.PulsarSubscriber;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.FullRangeGenerator;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.RangeGenerator;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.UniformRangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
+import org.apache.flink.connector.pulsar.common.topic.range.FullRangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.range.RangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.range.UniformRangeGenerator;
 import org.apache.flink.connector.pulsar.source.reader.deserializer.PulsarDeserializationSchema;
 
 import org.apache.pulsar.client.api.RegexSubscriptionMode;

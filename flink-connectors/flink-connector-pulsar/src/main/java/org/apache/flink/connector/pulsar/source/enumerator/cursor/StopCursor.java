@@ -23,7 +23,7 @@ import org.apache.flink.connector.pulsar.source.enumerator.cursor.stop.LatestMes
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.stop.MessageIdStopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.stop.NeverStopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.stop.TimestampStopCursor;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;
 import org.apache.pulsar.client.api.Message;

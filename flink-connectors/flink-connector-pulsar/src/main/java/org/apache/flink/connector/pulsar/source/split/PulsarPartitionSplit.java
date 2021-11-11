@@ -21,7 +21,7 @@ package org.apache.flink.connector.pulsar.source.split;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.connector.source.SourceSplit;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
 import org.apache.flink.connector.pulsar.source.reader.source.PulsarOrderedSourceReader;
 
 import org.apache.pulsar.client.admin.PulsarAdmin;

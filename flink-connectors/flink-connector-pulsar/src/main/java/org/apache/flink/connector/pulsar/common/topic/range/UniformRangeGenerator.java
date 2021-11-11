@@ -16,18 +16,18 @@
  * limitations under the License.
  */
 
-package org.apache.flink.connector.pulsar.source.enumerator.topic.range;
+package org.apache.flink.connector.pulsar.common.topic.range;
 
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicMetadata;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange;
+import org.apache.flink.connector.pulsar.common.topic.TopicMetadata;
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.MAX_RANGE;
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.RANGE_SIZE;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.MAX_RANGE;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.RANGE_SIZE;
 
 /**
  * This range generator would divide the range by the flink source parallelism. It would be the
