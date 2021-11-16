@@ -20,32 +20,34 @@ package org.apache.flink.connector.pulsar.sink.writer.serializer;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.serialization.SerializationSchema;
+import org.apache.flink.api.connector.sink.Sink.InitContext;
 import org.apache.flink.api.connector.source.SourceReaderContext;
 import org.apache.flink.metrics.MetricGroup;
 import org.apache.flink.util.UserCodeClassLoader;
 
 /**
- * Convert the {@link SourceReaderContext} into a {@link
- * DeserializationSchema.InitializationContext}, we would use a pulsar named metric group for this
+ * Convert the {@link InitContext} into a {@link
+ * SerializationSchema.InitializationContext}, we would use a pulsar named metric group for this
  * content.
  */
 @Internal
 public class PulsarSerializationSchemaInitializationContext
-        implements DeserializationSchema.InitializationContext {
+        implements SerializationSchema.InitializationContext {
 
-    private final SourceReaderContext readerContext;
+    private final InitContext context;
 
-    public PulsarSerializationSchemaInitializationContext(SourceReaderContext readerContext) {
-        this.readerContext = readerContext;
+    public PulsarSerializationSchemaInitializationContext(InitContext context) {
+        this.context = context;
     }
 
     @Override
     public MetricGroup getMetricGroup() {
-        return readerContext.metricGroup().addGroup("pulsarDeserializer");
+        return context.metricGroup().addGroup("pulsarSerializer");
     }
 
     @Override
     public UserCodeClassLoader getUserCodeClassLoader() {
-        return readerContext.getUserCodeClassLoader();
+        return context.getUserCodeClassLoader();
     }
 }

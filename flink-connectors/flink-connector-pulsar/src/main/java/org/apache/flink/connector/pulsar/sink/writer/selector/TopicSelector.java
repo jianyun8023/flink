@@ -18,8 +18,9 @@
 package org.apache.flink.connector.pulsar.sink.writer.selector;
 
 import org.apache.flink.annotation.PublicEvolving;
-
-import javax.validation.constraints.NotNull;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.utils.TopicPartitionUtils;
 
 import java.io.Serializable;
 
@@ -38,6 +39,15 @@ public interface TopicSelector<IN> extends Serializable {
      * @param record record
      * @return topicName
      */
-    @NotNull
-    String selector(IN record);
+    TopicPartition selector(IN record);
+
+    default void open(Configuration configuration) {
+        // TODO Add this method.
+    }
+
+    static <T> TopicSelector<T> singleTopic(String topic){
+        final TopicPartition topicPartition = TopicPartitionUtils.fromTopicName(topic);
+        return e -> topicPartition;
+    }
+    // TODO Create a round-robin topic selector which supports both single and multiple topics.
 }

@@ -18,9 +18,11 @@
 
 package org.apache.flink.connector.pulsar.source.enumerator.topic;
 
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+
 import org.junit.jupiter.api.Test;
 
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.createFullRange;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.createFullRange;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /** Unit tests for {@link TopicPartition}. */

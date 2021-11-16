@@ -17,6 +17,7 @@
 
 package org.apache.flink.connector.pulsar.sink.writer.serializer;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.api.common.ExecutionConfig;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.api.common.typeutils.TypeSerializer;
@@ -34,10 +35,12 @@ import java.io.IOException;
  * flink {@code TypeSerializer} by using given ExecutionConfig. This execution config could be
  * {@link ExecutionEnvironment#getConfig()}.
  */
-public class PulsarTypeInformationWrapper<IN> extends PulsarSerializationSchemaBase<IN, byte[]> {
+@Internal
+public class PulsarTypeInformationWrapper<IN> extends PulsarSerializationSchemaBase<IN> {
     private static final long serialVersionUID = 6647084180084963022L;
 
     private final TypeInformation<IN> information;
+
     private final TypeSerializer<IN> serializer;
 
     /**
@@ -55,11 +58,6 @@ public class PulsarTypeInformationWrapper<IN> extends PulsarSerializationSchemaB
         super(messageMetadata);
         this.information = information;
         this.serializer = information.createSerializer(config);
-    }
-
-    @Override
-    public Schema<byte[]> getSchema() {
-        return Schema.BYTES;
     }
 
     @Override

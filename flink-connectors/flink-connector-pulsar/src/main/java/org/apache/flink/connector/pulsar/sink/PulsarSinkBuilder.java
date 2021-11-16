@@ -18,72 +18,70 @@
 
 package org.apache.flink.connector.pulsar.sink;
 
+import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
-import org.apache.flink.configuration.ConfigOption;
-import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.UnmodifiableConfiguration;
 import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.pulsar.common.config.PulsarBaseBuilder;
 import org.apache.flink.connector.pulsar.common.config.PulsarOptions;
-import org.apache.flink.connector.pulsar.sink.writer.selector.PartitionSelector;
 import org.apache.flink.connector.pulsar.sink.writer.selector.TopicSelector;
 import org.apache.flink.connector.pulsar.sink.writer.serializer.PulsarSerializationSchema;
 
-import org.apache.pulsar.client.api.MessageRoutingMode;
-import org.apache.pulsar.client.api.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
-import static org.apache.flink.connector.pulsar.common.config.PulsarOptions.PULSAR_ADMIN_URL;
-import static org.apache.flink.connector.pulsar.common.config.PulsarOptions.PULSAR_SERVICE_URL;
-import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_MESSAGE_ROUTING_MODE;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_TRANSACTION_TIMEOUT_MILLIS;
 import static org.apache.flink.connector.pulsar.sink.config.PulsarSinkConfigUtils.checkConfigurations;
 import static org.apache.flink.util.Preconditions.checkArgument;
 import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
- * PulsarSink's builder is used to simplify the creation of Sink.
+ * The builder class for {@link PulsarSink} to make it easier for the users to construct a {@link
+ * PulsarSink}.
  *
- * @param <IN>
+ * <p>The following example shows the minimum setup to create a PulsarSink that reads the String
+ * values from a Pulsar topic.
+ *
+ * <pre>{@code
+ * PulsarSink<String> sink = PulsarSink.builder()
+ *      .setServiceUrl(operator().serviceUrl())
+ *      .setAdminUrl(operator().adminUrl())
+ *      .setTopic(topic)
+ *      .setSerializationSchema(PulsarSerializationSchema.pulsarSchema(Schema.STRING))
+ *      .build();
+ * }</pre>
+ *
+ * <p>The service url, admin url, topic to produce, and the record serializer
+ * are required fields that must be set.
+ *
+ * <p>To specify the delivery guarantees of PulsarSink, one can call {@link #setDeliveryGuarantee(DeliveryGuarantee)}.
+ * The default value of the delivery guarantee is {@link DeliveryGuarantee#EXACTLY_ONCE},
+ * and it requires the Pulsar broker to turn on transaction support.
+ *
+ * <pre>{@code
+ * PulsarSink<String> sink = PulsarSink.builder()
+ *      .setServiceUrl(operator().serviceUrl())
+ *      .setAdminUrl(operator().adminUrl())
+ *      .setTopic(topic)
+ *      .setSerializationSchema(PulsarSerializationSchema.pulsarSchema(Schema.STRING))
+ *      .setDeliveryGuarantee(deliveryGuarantee)
+ *      .build();
+ * }</pre>
+ *
+ * @param <IN> The input type of the sink.
  */
-public class PulsarSinkBuilder<IN> {
+@PublicEvolving
+public class PulsarSinkBuilder<IN> extends PulsarBaseBuilder<PulsarSinkBuilder<IN>> {
     private static final Logger LOG = LoggerFactory.getLogger(PulsarSinkBuilder.class);
 
     private DeliveryGuarantee deliveryGuarantee;
     private TopicSelector<IN> topicSelector;
-    private PulsarSerializationSchema<IN, ?> serializationSchema;
-    private PartitionSelector<IN> partitionSelector;
-    private final Configuration configuration;
+    private PulsarSerializationSchema<IN> serializationSchema;
 
     // private builder constructor.
     PulsarSinkBuilder() {
-        this.configuration = new Configuration();
+        super();
         this.deliveryGuarantee = DeliveryGuarantee.EXACTLY_ONCE;
-    }
-
-    /**
-     * Sets the admin endpoint for the PulsarAdmin of the PulsarSink.
-     *
-     * @param adminUrl the url for the PulsarAdmin.
-     * @return this PulsarSinkBuilder.
-     */
-    public PulsarSinkBuilder<IN> setAdminUrl(String adminUrl) {
-        return setConfig(PULSAR_ADMIN_URL, adminUrl);
-    }
-
-    /**
-     * Sets the server's link for the PulsarProducer of the PulsarSink.
-     *
-     * @param serviceUrl the server url of the Pulsar cluster.
-     * @return this PulsarSinkBuilder.
-     */
-    public PulsarSinkBuilder<IN> setServiceUrl(String serviceUrl) {
-        return setConfig(PULSAR_SERVICE_URL, serviceUrl);
     }
 
     /**
@@ -93,8 +91,8 @@ public class PulsarSinkBuilder<IN> {
      * @return this PulsarSinkBuilder.
      */
     public PulsarSinkBuilder<IN> setTopic(String topic) {
-        this.topicSelector = e -> topic;
-        return this;
+        checkNotNull(topic);
+        return setTopic(TopicSelector.singleTopic(topic));
     }
 
     /**
@@ -104,6 +102,9 @@ public class PulsarSinkBuilder<IN> {
      * @return this PulsarSinkBuilder.
      */
     public PulsarSinkBuilder<IN> setTopic(TopicSelector<IN> topicSelector) {
+        checkNotNull(topicSelector);
+        checkArgument(this.topicSelector == null,
+                "The topicSelector cannot be set repeatedly because it has already been set.");
         this.topicSelector = topicSelector;
         return this;
     }
@@ -120,48 +121,16 @@ public class PulsarSinkBuilder<IN> {
     }
 
     /**
-     * SerializationSchema is required for getting the {@link Schema} for serialize message from
-     * pulsar and getting the {@link TypeInformation} for message serialization in flink.
+     * SerializationSchema is required for getting the {@link TypeInformation} for message serialization in flink.
      *
      * <p>We have defined a set of implementations, using {@code
      * PulsarSerializationSchema#pulsarSchema} or {@code PulsarSerializationSchema#flinkSchema} for
      * creating the desired schema.
      */
     public <T extends IN> PulsarSinkBuilder<T> setSerializationSchema(
-            PulsarSerializationSchema<T, ?> serializationSchema) {
+            PulsarSerializationSchema<T> serializationSchema) {
         PulsarSinkBuilder<T> self = specialized();
         self.serializationSchema = serializationSchema;
-        return self;
-    }
-
-    /**
-     * Write the message to a partition of the Pulsar topic using a random method.
-     *
-     * @return this PulsarSinkBuilder.
-     */
-    public PulsarSinkBuilder<IN> singlePartition() {
-        return setConfig(PULSAR_MESSAGE_ROUTING_MODE, MessageRoutingMode.SinglePartition);
-    }
-
-    /**
-     * Write the message to a partition of the Pulsar topic using a round Robin method.
-     *
-     * @return this PulsarSinkBuilder.
-     */
-    public PulsarSinkBuilder<IN> roundRobinPartition() {
-        return setConfig(PULSAR_MESSAGE_ROUTING_MODE, MessageRoutingMode.RoundRobinPartition);
-    }
-
-    /**
-     * Write the message to a partition of the Pulsar topic using user defined method.
-     *
-     * @return this PulsarSinkBuilder.
-     */
-    public <T extends IN> PulsarSinkBuilder<T> customPartition(
-            PartitionSelector<T> partitionSelector) {
-        setConfig(PULSAR_MESSAGE_ROUTING_MODE, MessageRoutingMode.CustomPartition);
-        PulsarSinkBuilder<T> self = specialized();
-        self.partitionSelector = partitionSelector;
         return self;
     }
 
@@ -180,74 +149,21 @@ public class PulsarSinkBuilder<IN> {
 
         if (DeliveryGuarantee.EXACTLY_ONCE == deliveryGuarantee) {
             configuration.set(PulsarOptions.PULSAR_ENABLE_TRANSACTION, true);
+            // Need comments !!!
+            // Due to the design of pulsar, the sendTimeoutMs=0 must be set to open the transaction.
             configuration.set(PulsarSinkOptions.PULSAR_SEND_TIMEOUT_MS, 0L);
-            if (!configuration.contains(PULSAR_TRANSACTION_TIMEOUT_MILLIS)) {
-                LOG.warn(
-                        "The default pulsar transaction timeout is 3 hours, "
-                                + "make sure it was greater than your checkpoint interval.");
-            } else {
-                Long timeout = configuration.get(PULSAR_TRANSACTION_TIMEOUT_MILLIS);
-                LOG.warn(
-                        "The configured transaction timeout is {} mille seconds, "
-                                + "make sure it was greater than your checkpoint interval.",
-                        timeout);
-            }
+
+            Long timeout = configuration.get(PULSAR_TRANSACTION_TIMEOUT_MILLIS);
+            LOG.warn(
+                    "The configured transaction timeout is {} milliseconds, "
+                            + "make sure it was greater than your checkpoint interval.",
+                    timeout);
         }
+
         // Make the configuration unmodifiable.
         UnmodifiableConfiguration config = new UnmodifiableConfiguration(configuration);
         return new PulsarSink<>(
-                deliveryGuarantee, topicSelector, serializationSchema, partitionSelector, config);
-    }
-
-    /**
-     * Set an arbitrary property for the PulsarSink and PulsarProducer. The valid keys can be found
-     * in {@link PulsarSinkOptions} and {@link PulsarOptions}.
-     *
-     * <p>Make sure the option could be set only once or with same value.
-     *
-     * @param key the key of the property.
-     * @param value the value of the property.
-     * @return this PulsarSinkBuilder.
-     */
-    public <T> PulsarSinkBuilder<IN> setConfig(ConfigOption<T> key, T value) {
-        checkNotNull(key);
-        checkNotNull(value);
-        if (configuration.contains(key)) {
-            T oldValue = configuration.get(key);
-            checkArgument(
-                    Objects.equals(oldValue, value),
-                    "This option %s has been already set to value %s.",
-                    key.key(),
-                    oldValue);
-        } else {
-            configuration.set(key, value);
-        }
-        return this;
-    }
-
-    /**
-     * Set arbitrary properties for the PulsarSink and PulsarProducer. The valid keys can be found
-     * in {@link PulsarSinkOptions} and {@link PulsarOptions}.
-     *
-     * @param config the config to set for the PulsarSink.
-     * @return this PulsarSinkBuilder.
-     */
-    public PulsarSinkBuilder<IN> setConfig(Configuration config) {
-        Map<String, String> existedConfigs = configuration.toMap();
-        List<String> duplicatedKeys = new ArrayList<>();
-        for (Map.Entry<String, String> entry : config.toMap().entrySet()) {
-            String key = entry.getKey();
-            String value2 = existedConfigs.get(key);
-            if (value2 != null && !value2.equals(entry.getValue())) {
-                duplicatedKeys.add(key);
-            }
-        }
-        checkArgument(
-                duplicatedKeys.isEmpty(),
-                "Invalid configuration, these keys %s are already exist with different config value.",
-                duplicatedKeys);
-        configuration.addAll(config);
-        return this;
+                deliveryGuarantee, topicSelector, serializationSchema, config);
     }
 
     // ------------- private helpers  --------------

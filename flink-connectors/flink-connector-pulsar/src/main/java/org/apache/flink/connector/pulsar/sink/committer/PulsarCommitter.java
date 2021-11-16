@@ -51,8 +51,6 @@ public class PulsarCommitter implements Committer<PulsarSinkCommittable>, Closea
 
     private transient PulsarClientImpl pulsarClient;
 
-    private final Closer closer = Closer.create();
-
     public PulsarCommitter(DeliveryGuarantee deliveryGuarantee, Configuration configuration) {
         this.deliveryGuarantee = deliveryGuarantee;
         this.configuration = configuration;
@@ -61,7 +59,7 @@ public class PulsarCommitter implements Committer<PulsarSinkCommittable>, Closea
     @Override
     public List<PulsarSinkCommittable> commit(List<PulsarSinkCommittable> committables)
             throws IOException {
-        if (deliveryGuarantee != DeliveryGuarantee.EXACTLY_ONCE || committables.isEmpty()) {
+        if (committables.isEmpty()) {
             return Collections.emptyList();
         }
         final TransactionCoordinatorClientImpl tcClient = getTcClient();
@@ -79,18 +77,16 @@ public class PulsarCommitter implements Committer<PulsarSinkCommittable>, Closea
         return recoveryCommittables;
     }
 
-    private synchronized TransactionCoordinatorClientImpl getTcClient()
-            throws TransactionCoordinatorClientException {
+    private TransactionCoordinatorClientImpl getTcClient() {
         if (this.pulsarClient != null && !this.pulsarClient.isClosed()) {
             return pulsarClient.getTcClient();
         }
         pulsarClient = (PulsarClientImpl) PulsarConfigUtils.createClient(configuration);
-        closer.register(pulsarClient);
         return pulsarClient.getTcClient();
     }
 
     @Override
     public void close() throws IOException {
-        closer.close();
+        pulsarClient.close();
     }
 }

@@ -25,46 +25,61 @@ import org.apache.flink.api.connector.sink.Sink;
 import org.apache.flink.api.connector.sink.SinkWriter;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.base.DeliveryGuarantee;
+import org.apache.flink.connector.pulsar.common.utils.PulsarExceptionUtils;
 import org.apache.flink.connector.pulsar.sink.committer.PulsarCommitter;
-import org.apache.flink.connector.pulsar.sink.writer.PulsarWriter;
+import org.apache.flink.connector.pulsar.sink.writer.PulsarWriterFactory;
 import org.apache.flink.connector.pulsar.sink.writer.PulsarWriterState;
 import org.apache.flink.connector.pulsar.sink.writer.PulsarWriterStateSerializer;
-import org.apache.flink.connector.pulsar.sink.writer.selector.PartitionSelector;
 import org.apache.flink.connector.pulsar.sink.writer.selector.TopicSelector;
 import org.apache.flink.connector.pulsar.sink.writer.serializer.PulsarSerializationSchema;
+import org.apache.flink.connector.pulsar.sink.writer.serializer.PulsarSerializationSchemaInitializationContext;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+import static org.apache.flink.util.Preconditions.checkNotNull;
+
 /**
- * a pulsar Sink implement.
+ * The Sink implementation of Pulsar. Please use a {@link PulsarSinkBuilder} to construct a
+ * {@link PulsarSink}. The following example shows how to create a PulsarSink receiving records
+ * of <code>String</code> type.
  *
- * @param <IN> record data type.
+ * <pre>{@code
+ * PulsarSink<String> sink = PulsarSink.builder()
+ *      .setServiceUrl(operator().serviceUrl())
+ *      .setAdminUrl(operator().adminUrl())
+ *      .setTopic(topic)
+ *      .setSerializationSchema(PulsarSerializationSchema.pulsarSchema(Schema.STRING))
+ *      .build();
+ * }</pre>
+ *
+ * <p>See {@link PulsarSinkBuilder} for more details.
+ *
+ * @param <IN> The input type of the source.
  */
 @PublicEvolving
 public class PulsarSink<IN> implements Sink<IN, PulsarSinkCommittable, PulsarWriterState, Void> {
+    private static final long serialVersionUID = 4416714587951282119L;
 
     private final DeliveryGuarantee deliveryGuarantee;
 
     private final TopicSelector<IN> topicSelector;
-    private final PulsarSerializationSchema<IN, ?> serializationSchema;
-    private final PartitionSelector<IN> partitionSelector;
+
+    private final PulsarSerializationSchema<IN> serializationSchema;
 
     private final Configuration configuration;
 
-    public PulsarSink(
+    PulsarSink(
             DeliveryGuarantee deliveryGuarantee,
             TopicSelector<IN> topicSelector,
-            PulsarSerializationSchema<IN, ?> serializationSchema,
-            PartitionSelector<IN> partitionSelector,
+            PulsarSerializationSchema<IN> serializationSchema,
             Configuration configuration) {
-        this.deliveryGuarantee = deliveryGuarantee;
-        this.topicSelector = topicSelector;
-        this.serializationSchema = serializationSchema;
-        this.partitionSelector = partitionSelector;
-        this.configuration = configuration;
+        this.deliveryGuarantee = checkNotNull(deliveryGuarantee);
+        this.topicSelector = checkNotNull(topicSelector);
+        this.serializationSchema = checkNotNull(serializationSchema);
+        this.configuration = checkNotNull(configuration);
     }
 
     /**
@@ -81,16 +96,19 @@ public class PulsarSink<IN> implements Sink<IN, PulsarSinkCommittable, PulsarWri
     public SinkWriter<IN, PulsarSinkCommittable, PulsarWriterState> createWriter(
             InitContext initContext, List<PulsarWriterState> states) throws IOException {
 
-        PulsarWriter<IN> writer =
-                new PulsarWriter<>(
-                        deliveryGuarantee,
-                        topicSelector,
-                        serializationSchema,
-                        partitionSelector,
-                        configuration,
-                        initContext);
-        writer.initializeState(states);
-        return writer;
+        try {
+            serializationSchema.open(new PulsarSerializationSchemaInitializationContext(initContext));
+        } catch (Exception e) {
+            PulsarExceptionUtils.sneakyThrow(e);
+        }
+        return PulsarWriterFactory.create(
+                deliveryGuarantee,
+                topicSelector,
+                serializationSchema,
+                configuration,
+                initContext,
+                states
+        );
     }
 
     @Override

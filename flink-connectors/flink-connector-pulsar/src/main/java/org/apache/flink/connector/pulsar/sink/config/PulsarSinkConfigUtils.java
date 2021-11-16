@@ -46,8 +46,7 @@ import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_BA
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_BATCHING_MAX_PUBLISH_DELAY_MICROS;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_BLOCK_IF_QUEUE_FULL;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_COMPRESSION_TYPE;
-import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_CRYPTO_FAILURE_ACTION;
-import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_ENABLE_CHUNKING;
+import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_CHUNKING_ENABLED;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_HASHING_SCHEME;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_MAX_PENDING_MESSAGES;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_MAX_PENDING_MESSAGES_ACROSS_PARTITIONS;
@@ -120,7 +119,6 @@ public final class PulsarSinkConfigUtils {
                 builder::maxPendingMessagesAcrossPartitions);
         setOptionValue(configuration, PULSAR_MESSAGE_ROUTING_MODE, builder::messageRoutingMode);
         setOptionValue(configuration, PULSAR_HASHING_SCHEME, builder::hashingScheme);
-        setOptionValue(configuration, PULSAR_CRYPTO_FAILURE_ACTION, builder::cryptoFailureAction);
         setOptionValue(
                 configuration,
                 PULSAR_BATCHING_MAX_PUBLISH_DELAY_MICROS,
@@ -128,7 +126,7 @@ public final class PulsarSinkConfigUtils {
         setOptionValue(configuration, PULSAR_BATCHING_MAX_MESSAGES, builder::batchingMaxMessages);
         setOptionValue(configuration, PULSAR_BATCHING_ENABLED, builder::enableBatching);
         setOptionValue(configuration, PULSAR_COMPRESSION_TYPE, builder::compressionType);
-        setOptionValue(configuration, PULSAR_ENABLE_CHUNKING, builder::enableChunking);
+        setOptionValue(configuration, PULSAR_CHUNKING_ENABLED, builder::enableChunking);
         return builder;
     }
 }

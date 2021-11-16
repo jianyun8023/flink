@@ -18,7 +18,7 @@
 
 package org.apache.flink.connector.pulsar.source;
 
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.UniformRangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.range.UniformRangeGenerator;
 
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.junit.jupiter.api.Test;

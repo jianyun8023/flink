@@ -18,30 +18,38 @@
 
 package org.apache.flink.connector.pulsar.sink.writer;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.core.io.SimpleVersionedSerializer;
 import org.apache.flink.core.memory.DataInputDeserializer;
 import org.apache.flink.core.memory.DataInputView;
 import org.apache.flink.core.memory.DataOutputSerializer;
-import org.apache.flink.core.memory.DataOutputView;
 
 import org.apache.pulsar.client.api.transaction.TxnID;
 
 import java.io.IOException;
 
 /** a serializer for PulsarWriter. */
+@Internal
 public class PulsarWriterStateSerializer implements SimpleVersionedSerializer<PulsarWriterState> {
-    private static final int MAGIC_NUMBER = 0x1e765c70;
+
+    public static final int VERSION = 1;
 
     @Override
     public int getVersion() {
-        return 1;
+        return VERSION;
     }
 
     @Override
     public byte[] serialize(PulsarWriterState writerState) throws IOException {
-        DataOutputSerializer out = new DataOutputSerializer(256);
-        out.writeInt(MAGIC_NUMBER);
-        serializeV1(writerState, out);
+        // total size = boolean size + ( 2 * long size )
+        DataOutputSerializer out = new DataOutputSerializer(129);
+        if (writerState.getTxnID() == null) {
+            out.writeBoolean(false);
+        } else {
+            out.writeBoolean(true);
+            out.writeLong(writerState.getTxnID().getMostSigBits());
+            out.writeLong(writerState.getTxnID().getLeastSigBits());
+        }
         return out.getCopyOfBuffer();
     }
 
@@ -49,23 +57,10 @@ public class PulsarWriterStateSerializer implements SimpleVersionedSerializer<Pu
     public PulsarWriterState deserialize(int version, byte[] serialized) throws IOException {
         DataInputDeserializer in = new DataInputDeserializer(serialized);
 
-        switch (version) {
-            case 1:
-                validateMagicNumber(in);
-                return deserializeV1(in);
-            default:
-                throw new IOException("Unrecognized version or corrupt state: " + version);
+        if (version == VERSION) {
+            return deserializeV1(in);
         }
-    }
-
-    private void serializeV1(PulsarWriterState record, DataOutputView target) throws IOException {
-        if (record.getTxnID() == null) {
-            target.writeBoolean(false);
-        } else {
-            target.writeBoolean(true);
-            target.writeLong(record.getTxnID().getMostSigBits());
-            target.writeLong(record.getTxnID().getLeastSigBits());
-        }
+        throw new IOException("Unrecognized version or corrupt state: " + version);
     }
 
     private PulsarWriterState deserializeV1(DataInputView dataInputView) throws IOException {
@@ -76,13 +71,5 @@ public class PulsarWriterStateSerializer implements SimpleVersionedSerializer<Pu
             transactionalId = new TxnID(mostSigBits, leastSigBits);
         }
         return new PulsarWriterState(transactionalId);
-    }
-
-    private static void validateMagicNumber(DataInputView in) throws IOException {
-        int magicNumber = in.readInt();
-        if (magicNumber != MAGIC_NUMBER) {
-            throw new IOException(
-                    String.format("Corrupt data: Unexpected magic number %08X", magicNumber));
-        }
     }
 }

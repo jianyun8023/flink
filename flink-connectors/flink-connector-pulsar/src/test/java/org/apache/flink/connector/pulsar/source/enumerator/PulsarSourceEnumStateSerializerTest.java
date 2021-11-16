@@ -19,8 +19,8 @@
 package org.apache.flink.connector.pulsar.source.enumerator;
 
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
 import org.apache.flink.connector.pulsar.source.split.PulsarPartitionSplit;
 
 import org.apache.flink.shaded.guava30.com.google.common.collect.ImmutableMap;
@@ -34,7 +34,7 @@ import java.util.Set;
 
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.apache.flink.connector.pulsar.source.enumerator.PulsarSourceEnumStateSerializer.INSTANCE;
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.createFullRange;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.createFullRange;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 

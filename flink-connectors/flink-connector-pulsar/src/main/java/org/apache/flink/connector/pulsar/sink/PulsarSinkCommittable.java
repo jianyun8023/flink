@@ -28,17 +28,11 @@ import java.util.List;
 /** the state for PulsarCommitter. */
 @Internal
 public class PulsarSinkCommittable {
-    private final List<MessageId> pendingMessageIds;
 
     private final TxnID txnID;
 
-    public PulsarSinkCommittable(List<MessageId> pendingMessageIds, TxnID txnID) {
-        this.pendingMessageIds = pendingMessageIds;
+    public PulsarSinkCommittable(TxnID txnID) {
         this.txnID = txnID;
-    }
-
-    public List<MessageId> getPendingMessageIds() {
-        return pendingMessageIds;
     }
 
     public TxnID getTxnID() {

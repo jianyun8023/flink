@@ -33,13 +33,12 @@ import org.apache.pulsar.common.schema.KeyValue;
 import java.io.Serializable;
 
 /**
- * A schema bridge for serializing the pulsar's {@code Message<T>} into a flink managed instance. We
+ * A schema bridge for serializing the pulsar's {@code Message<byte[]>} into a flink managed instance. We
  * support both the pulsar's self managed schema and flink managed schema.
  *
- * @param <T> The output message type for sinking to downstream flink operator.
  */
 @PublicEvolving
-public interface PulsarSerializationSchema<IN, T> extends Serializable {
+public interface PulsarSerializationSchema<IN> extends Serializable {
 
     /**
      * Initialization method for the schema. It is called before the actual working methods {@link
@@ -54,21 +53,19 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
         // Nothing to do here for the default implementation.
     }
 
-    Schema<T> getSchema();
-
     /**
      * Serializes the incoming element to a specified type.
      *
      * @param element The incoming element to be serialized
      * @param out pulsar message to be sent
      */
-    void serialize(IN element, TypedMessageBuilder<T> out);
+    void serialize(IN element, TypedMessageBuilder<byte[]> out);
 
     /**
      * Create a PulsarDeserializationSchema by using the flink's {@link SerializationSchema}. It
      * would consume the pulsar message as byte array and decode the message by using flink's logic.
      */
-    static <IN> PulsarSerializationSchema<IN, byte[]> flinkSchema(
+    static <IN> PulsarSerializationSchema<IN> flinkSchema(
             SerializationSchema<IN> serializationSchema) {
         return new PulsarSerializationSchemaWrapper<>(serializationSchema, null);
     }
@@ -77,7 +74,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * Create a PulsarDeserializationSchema by using the flink's {@link SerializationSchema}. It
      * would consume the pulsar message as byte array and decode the message by using flink's logic.
      */
-    static <IN> PulsarSerializationSchema<IN, byte[]> flinkSchema(
+    static <IN> PulsarSerializationSchema<IN> flinkSchema(
             SerializationSchema<IN> serializationSchema, MessageMetadata<IN> messageMetadata) {
         return new PulsarSerializationSchemaWrapper<>(serializationSchema, messageMetadata);
     }
@@ -90,7 +87,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * href="https://pulsar.apache.org/docs/en/schema-understand/#primitive-type">primitive
      * types</a> here.
      */
-    static <IN> PulsarSerializationSchema<IN, IN> pulsarSchema(Schema<IN> schema) {
+    static <IN> PulsarSerializationSchema<IN> pulsarSchema(Schema<IN> schema) {
         PulsarSchema<IN> pulsarSchema = new PulsarSchema<>(schema);
         return new PulsarSchemaWrapper<>(pulsarSchema, null);
     }
@@ -103,7 +100,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * href="https://pulsar.apache.org/docs/en/schema-understand/#primitive-type">primitive
      * types</a> here.
      */
-    static <IN> PulsarSerializationSchema<IN, IN> pulsarSchema(
+    static <IN> PulsarSerializationSchema<IN> pulsarSchema(
             Schema<IN> schema, MessageMetadata<IN> messageMetadata) {
         PulsarSchema<IN> pulsarSchema = new PulsarSchema<>(schema);
         return new PulsarSchemaWrapper<>(pulsarSchema, messageMetadata);
@@ -116,7 +113,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * <p>We only support <a
      * href="https://pulsar.apache.org/docs/en/schema-understand/#struct">struct types</a> here.
      */
-    static <IN> PulsarSerializationSchema<IN, IN> pulsarSchema(
+    static <IN> PulsarSerializationSchema<IN> pulsarSchema(
             Schema<IN> schema, Class<IN> typeClass) {
         PulsarSchema<IN> pulsarSchema = new PulsarSchema<>(schema, typeClass);
         return new PulsarSchemaWrapper<>(pulsarSchema, null);
@@ -129,7 +126,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * <p>We only support <a
      * href="https://pulsar.apache.org/docs/en/schema-understand/#struct">struct types</a> here.
      */
-    static <IN> PulsarSerializationSchema<IN, IN> pulsarSchema(
+    static <IN> PulsarSerializationSchema<IN> pulsarSchema(
             Schema<IN> schema, Class<IN> typeClass, MessageMetadata<IN> messageMetadata) {
         PulsarSchema<IN> pulsarSchema = new PulsarSchema<>(schema, typeClass);
         return new PulsarSchemaWrapper<>(pulsarSchema, messageMetadata);
@@ -142,7 +139,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * <p>We only support <a
      * href="https://pulsar.apache.org/docs/en/schema-understand/#keyvalue">keyvalue types</a> here.
      */
-    static <K, V> PulsarSerializationSchema<KeyValue<K, V>, KeyValue<K, V>> pulsarSchema(
+    static <K, V> PulsarSerializationSchema<KeyValue<K, V>> pulsarSchema(
             Schema<KeyValue<K, V>> schema, Class<K> keyClass, Class<V> valueClass) {
         PulsarSchema<KeyValue<K, V>> pulsarSchema =
                 new PulsarSchema<>(schema, keyClass, valueClass);
@@ -156,7 +153,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * <p>We only support <a
      * href="https://pulsar.apache.org/docs/en/schema-understand/#keyvalue">keyvalue types</a> here.
      */
-    static <K, V> PulsarSerializationSchema<KeyValue<K, V>, KeyValue<K, V>> pulsarSchema(
+    static <K, V> PulsarSerializationSchema<KeyValue<K, V>> pulsarSchema(
             Schema<KeyValue<K, V>> schema,
             Class<K> keyClass,
             Class<V> valueClass,
@@ -170,7 +167,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * Create a PulsarDeserializationSchema by using the given {@link TypeInformation}. This method
      * is only used for treating message that was written into pulsar by {@link TypeInformation}.
      */
-    static <IN> PulsarSerializationSchema<IN, byte[]> flinkTypeInfo(
+    static <IN> PulsarSerializationSchema<IN> flinkTypeInfo(
             TypeInformation<IN> information, ExecutionConfig config) {
         return new PulsarTypeInformationWrapper<>(information, config, null);
     }
@@ -179,7 +176,7 @@ public interface PulsarSerializationSchema<IN, T> extends Serializable {
      * Create a PulsarDeserializationSchema by using the given {@link TypeInformation}. This method
      * is only used for treating message that was written into pulsar by {@link TypeInformation}.
      */
-    static <IN> PulsarSerializationSchema<IN, byte[]> flinkTypeInfo(
+    static <IN> PulsarSerializationSchema<IN> flinkTypeInfo(
             TypeInformation<IN> information,
             ExecutionConfig config,
             MessageMetadata<IN> messageMetadata) {

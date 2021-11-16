@@ -24,7 +24,9 @@ import org.apache.flink.api.connector.source.Boundedness;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.UnmodifiableConfiguration;
+import org.apache.flink.connector.pulsar.common.config.PulsarBaseBuilder;
 import org.apache.flink.connector.pulsar.common.config.PulsarOptions;
+import org.apache.flink.connector.pulsar.sink.PulsarSinkBuilder;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StartCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.cursor.StopCursor;
 import org.apache.flink.connector.pulsar.source.enumerator.subscriber.PulsarSubscriber;
@@ -107,10 +109,9 @@ import static org.apache.flink.util.Preconditions.checkState;
  * @param <OUT> The output type of the source.
  */
 @PublicEvolving
-public final class PulsarSourceBuilder<OUT> {
+public final class PulsarSourceBuilder<OUT> extends PulsarBaseBuilder<PulsarSourceBuilder<OUT>> {
     private static final Logger LOG = LoggerFactory.getLogger(PulsarSourceBuilder.class);
 
-    private final Configuration configuration;
     private PulsarSubscriber subscriber;
     private RangeGenerator rangeGenerator;
     private StartCursor startCursor;
@@ -120,29 +121,9 @@ public final class PulsarSourceBuilder<OUT> {
 
     // private builder constructor.
     PulsarSourceBuilder() {
-        this.configuration = new Configuration();
+        super();
         this.startCursor = StartCursor.defaultStartCursor();
         this.stopCursor = StopCursor.defaultStopCursor();
-    }
-
-    /**
-     * Sets the admin endpoint for the PulsarAdmin of the PulsarSource.
-     *
-     * @param adminUrl the url for the PulsarAdmin.
-     * @return this PulsarSourceBuilder.
-     */
-    public PulsarSourceBuilder<OUT> setAdminUrl(String adminUrl) {
-        return setConfig(PULSAR_ADMIN_URL, adminUrl);
-    }
-
-    /**
-     * Sets the server's link for the PulsarConsumer of the PulsarSource.
-     *
-     * @param serviceUrl the server url of the Pulsar cluster.
-     * @return this PulsarSourceBuilder.
-     */
-    public PulsarSourceBuilder<OUT> setServiceUrl(String serviceUrl) {
-        return setConfig(PULSAR_SERVICE_URL, serviceUrl);
     }
 
     /**
@@ -355,57 +336,6 @@ public final class PulsarSourceBuilder<OUT> {
         PulsarSourceBuilder<T> self = specialized();
         self.deserializationSchema = deserializationSchema;
         return self;
-    }
-
-    /**
-     * Set an arbitrary property for the PulsarSource and PulsarConsumer. The valid keys can be
-     * found in {@link PulsarSourceOptions} and {@link PulsarOptions}.
-     *
-     * <p>Make sure the option could be set only once or with same value.
-     *
-     * @param key the key of the property.
-     * @param value the value of the property.
-     * @return this PulsarSourceBuilder.
-     */
-    public <T> PulsarSourceBuilder<OUT> setConfig(ConfigOption<T> key, T value) {
-        checkNotNull(key);
-        checkNotNull(value);
-        if (configuration.contains(key)) {
-            T oldValue = configuration.get(key);
-            checkArgument(
-                    Objects.equals(oldValue, value),
-                    "This option %s has been already set to value %s.",
-                    key.key(),
-                    oldValue);
-        } else {
-            configuration.set(key, value);
-        }
-        return this;
-    }
-
-    /**
-     * Set arbitrary properties for the PulsarSource and PulsarConsumer. The valid keys can be found
-     * in {@link PulsarSourceOptions} and {@link PulsarOptions}.
-     *
-     * @param config the config to set for the PulsarSource.
-     * @return this PulsarSourceBuilder.
-     */
-    public PulsarSourceBuilder<OUT> setConfig(Configuration config) {
-        Map<String, String> existedConfigs = configuration.toMap();
-        List<String> duplicatedKeys = new ArrayList<>();
-        for (Map.Entry<String, String> entry : config.toMap().entrySet()) {
-            String key = entry.getKey();
-            String value2 = existedConfigs.get(key);
-            if (value2 != null && !value2.equals(entry.getValue())) {
-                duplicatedKeys.add(key);
-            }
-        }
-        checkArgument(
-                duplicatedKeys.isEmpty(),
-                "Invalid configuration, these keys %s are already exist with different config value.",
-                duplicatedKeys);
-        configuration.addAll(config);
-        return this;
     }
 
     /**

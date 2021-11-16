@@ -18,9 +18,9 @@
 
 package org.apache.flink.connector.pulsar.source.enumerator.subscriber;
 
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicNameUtils;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.TopicPartition;
-import org.apache.flink.connector.pulsar.source.enumerator.topic.range.FullRangeGenerator;
+import org.apache.flink.connector.pulsar.common.topic.TopicNameUtils;
+import org.apache.flink.connector.pulsar.common.topic.TopicPartition;
+import org.apache.flink.connector.pulsar.common.topic.range.FullRangeGenerator;
 import org.apache.flink.connector.pulsar.testutils.PulsarTestSuiteBase;
 
 import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 
 import static org.apache.flink.connector.pulsar.source.enumerator.subscriber.PulsarSubscriber.getTopicListSubscriber;
 import static org.apache.flink.connector.pulsar.source.enumerator.subscriber.PulsarSubscriber.getTopicPatternSubscriber;
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.createFullRange;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.createFullRange;
 import static org.apache.pulsar.client.api.RegexSubscriptionMode.AllTopics;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

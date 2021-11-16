@@ -17,6 +17,7 @@
 
 package org.apache.flink.connector.pulsar.sink.writer.serializer;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.pulsar.sink.writer.selector.MessageMetadata;
 
 import org.apache.pulsar.client.api.TypedMessageBuilder;
@@ -29,10 +30,10 @@ import java.util.function.Function;
  * abstract the process of generating pulsar Message to simplify metadata processing.
  *
  * @param <IN> record
- * @param <T> pulsar Message Type
  */
-public abstract class PulsarSerializationSchemaBase<IN, T>
-        implements PulsarSerializationSchema<IN, T> {
+@Internal
+public abstract class PulsarSerializationSchemaBase<IN>
+        implements PulsarSerializationSchema<IN> {
 
     protected final MessageMetadata<IN> messageMetadata;
 
@@ -41,14 +42,14 @@ public abstract class PulsarSerializationSchemaBase<IN, T>
     }
 
     @Override
-    public void serialize(IN element, TypedMessageBuilder<T> out) {
+    public void serialize(IN element, TypedMessageBuilder<byte[]> out) {
         out.value(serialize(element));
         handleMessageMetadata(element, out);
     }
 
-    public abstract T serialize(IN element);
+    public abstract byte[] serialize(IN element);
 
-    protected void handleMessageMetadata(IN record, TypedMessageBuilder<T> out) {
+    protected void handleMessageMetadata(IN record, TypedMessageBuilder<byte[]> out) {
         if (messageMetadata == null) {
             return;
         }

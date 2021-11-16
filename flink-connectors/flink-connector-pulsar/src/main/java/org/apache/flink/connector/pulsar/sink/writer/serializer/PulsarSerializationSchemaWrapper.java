@@ -33,7 +33,7 @@ import org.apache.pulsar.client.api.Schema;
  * @param <IN> The output type of the message.
  */
 @Internal
-class PulsarSerializationSchemaWrapper<IN> extends PulsarSerializationSchemaBase<IN, byte[]> {
+class PulsarSerializationSchemaWrapper<IN> extends PulsarSerializationSchemaBase<IN> {
     private static final long serialVersionUID = -630646912412751300L;
 
     private final SerializationSchema<IN> serializationSchema;
@@ -48,11 +48,6 @@ class PulsarSerializationSchemaWrapper<IN> extends PulsarSerializationSchemaBase
     public void open(InitializationContext context) throws Exception {
         // Initialize it for some custom logic.
         serializationSchema.open(context);
-    }
-
-    @Override
-    public Schema<byte[]> getSchema() {
-        return Schema.BYTES;
     }
 
     @Override

@@ -18,6 +18,8 @@
 
 package org.apache.flink.connector.pulsar.source.enumerator.topic;
 
+import org.apache.flink.connector.pulsar.common.topic.TopicNameUtils;
+
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

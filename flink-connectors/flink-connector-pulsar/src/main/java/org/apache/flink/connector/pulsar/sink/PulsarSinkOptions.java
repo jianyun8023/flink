@@ -28,9 +28,11 @@ import org.apache.flink.configuration.description.Description;
 import org.apache.pulsar.client.api.CompressionType;
 import org.apache.pulsar.client.api.HashingScheme;
 import org.apache.pulsar.client.api.MessageRoutingMode;
-import org.apache.pulsar.client.api.ProducerCryptoFailureAction;
+import org.apache.pulsar.client.api.ProducerAccessMode;
 
 import java.time.Duration;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.flink.configuration.description.TextElement.code;
@@ -69,7 +71,7 @@ public final class PulsarSinkOptions {
                     .defaultValue(true)
                     .withDescription(
                             "This option is used to set whether to throw an exception to trigger a termination or retry of the Pulsar sink operator when writing a message to Pulsar Topic fails. "
-                                    + "The behavior of the termination or retry is determined by the Flink checkpiont configuration.");
+                                    + "The behavior of the termination or retry is determined by the Flink checkpoint configuration.");
 
     public static final ConfigOption<Long> PULSAR_TRANSACTION_TIMEOUT_MILLIS =
             ConfigOptions.key(SINK_CONFIG_PREFIX + "transactionTimeoutMillis")
@@ -162,10 +164,11 @@ public final class PulsarSinkOptions {
                                                     + "#setMaxPendingMessages(int)}) if the total number exceeds the configured value.")
                                     .build());
 
+    // TODO Compare with hashingScheme
     public static final ConfigOption<MessageRoutingMode> PULSAR_MESSAGE_ROUTING_MODE =
             ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "messageRoutingMode")
                     .enumType(MessageRoutingMode.class)
-                    .defaultValue(MessageRoutingMode.RoundRobinPartition)
+                    .noDefaultValue()
                     .withDescription(
                             Description.builder()
                                     .text(
@@ -183,6 +186,7 @@ public final class PulsarSinkOptions {
                                                     "pulsar.CustomPartition: a custom partitioning scheme"))
                                     .build());
 
+    // TODO How to use this.
     public static final ConfigOption<HashingScheme> PULSAR_HASHING_SCHEME =
             ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "hashingScheme")
                     .enumType(HashingScheme.class)
@@ -201,30 +205,33 @@ public final class PulsarSinkOptions {
                                             text(
                                                     "pulsar.Murmur3_32Hash: applies the Murmur3 hashing function"))
                                     .build());
-    public static final ConfigOption<ProducerCryptoFailureAction> PULSAR_CRYPTO_FAILURE_ACTION =
-            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "cryptoFailureAction")
-                    .enumType(ProducerCryptoFailureAction.class)
-                    .defaultValue(ProducerCryptoFailureAction.FAIL)
-                    .withDescription(
-                            Description.builder()
-                                    .text("Producer should take action when encryption fails.")
-                                    .linebreak()
-                                    .list(
-                                            text(
-                                                    "FAIL: if encryption fails, unencrypted messages fail to send."),
-                                            text(
-                                                    "SEND: if encryption fails, unencrypted messages are sent."))
-                                    .build());
     public static final ConfigOption<Long> PULSAR_BATCHING_MAX_PUBLISH_DELAY_MICROS =
             ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "batchingMaxPublishDelayMicros")
                     .longType()
                     .defaultValue(TimeUnit.MILLISECONDS.toMicros(1))
                     .withDescription("Batching time period of sending messages.");
+
+    public static final ConfigOption<Long> PULSAR_BATCHING_PARTITION_SWITCH_FREQUENCY_BY_PUBLISH_DELAY =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "batchingPartitionSwitchFrequencyByPublishDelay")
+                    .longType()
+                    .defaultValue(TimeUnit.MILLISECONDS.toMicros(1))
+                    .withDescription("Batching time period of sending messages.");
+
+    // batchingPartitionSwitchFrequencyByPublishDelay
+
     public static final ConfigOption<Integer> PULSAR_BATCHING_MAX_MESSAGES =
             ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "batchingMaxMessages")
                     .intType()
                     .defaultValue(1000)
                     .withDescription("The maximum number of messages permitted in a batch.");
+
+    public static final ConfigOption<Integer> PULSAR_BATCHING_MAX_BYTES =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "batchingMaxBytes")
+                    .intType()
+                    .defaultValue(1000)
+                    .withDescription("The maximum number of messages permitted in a batch.");
+
+    // batchingMaxBytes
 
     public static final ConfigOption<Boolean> PULSAR_BATCHING_ENABLED =
             ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "batchingEnabled")
@@ -232,19 +239,8 @@ public final class PulsarSinkOptions {
                     .defaultValue(true)
                     .withDescription("Enable batching of messages.");
 
-    public static final ConfigOption<CompressionType> PULSAR_COMPRESSION_TYPE =
-            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "enableChunking")
-                    .enumType(CompressionType.class)
-                    .noDefaultValue()
-                    .withDescription(
-                            Description.builder()
-                                    .text("Message data compression type used by a producer.")
-                                    .linebreak()
-                                    .text("Available options:")
-                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
-                                    .build());
-    public static final ConfigOption<Boolean> PULSAR_ENABLE_CHUNKING =
-            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "enableChunking")
+    public static final ConfigOption<Boolean> PULSAR_CHUNKING_ENABLED =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "chunkingEnabled")
                     .booleanType()
                     .noDefaultValue()
                     .withDescription(
@@ -258,4 +254,94 @@ public final class PulsarSinkOptions {
                                             "So, it allows client to successfully publish large size of messages in "
                                                     + "pulsar.")
                                     .build());
+    public static final ConfigOption<CompressionType> PULSAR_COMPRESSION_TYPE =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "compressionType")
+                    .enumType(CompressionType.class)
+                    .defaultValue(CompressionType.NONE)
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+    public static final ConfigOption<Long> PULSAR_INITIAL_SEQUENCE_ID =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "initialSequenceId")
+                    .longType()
+                    .noDefaultValue()
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+    public static final ConfigOption<Boolean> PULSAR_AUTO_UPDATE_PARTITIONS =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "autoUpdatePartitions")
+                    .booleanType()
+                    .defaultValue(Boolean.TRUE)
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+    public static final ConfigOption<Long> PULSAR_AUTO_UPDATE_PARTITIONS_INTERVAL_SECONDS =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "autoUpdatePartitionsIntervalSeconds")
+                    .longType()
+                    .defaultValue(60L)
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+    public static final ConfigOption<Boolean> PULSAR_MULTI_SCHEMA =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "multiSchema")
+                    .booleanType()
+                    .defaultValue(Boolean.TRUE)
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+    public static final ConfigOption<ProducerAccessMode> PULSAR_ACCESS_MODE =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "accessMode")
+                    .enumType(ProducerAccessMode.class)
+                    .defaultValue(ProducerAccessMode.Shared)
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+    public static final ConfigOption<Map<String, String>> PULSAR_PROPERTIES =
+            ConfigOptions.key(PRODUCER_CONFIG_PREFIX + "properties")
+                    .mapType()
+                    .defaultValue(new TreeMap<>())
+                    .withDescription(
+                            Description.builder()
+                                    .text("Message data compression type used by a producer.")
+                                    .linebreak()
+                                    .text("Available options:")
+                                    .list(text("LZ4"), text("ZLIB"), text("ZSTD"), text("SNAPPY"))
+                                    .build());
+
+
+    // private Long initialSequenceId = null;
+    // private boolean autoUpdatePartitions = true;
+    // private long autoUpdatePartitionsIntervalSeconds = 60;
+    // private boolean multiSchema = true;
+    // private ProducerAccessMode accessMode = ProducerAccessMode.Shared;
+    // private SortedMap<String, String> properties = new TreeMap<>();
 }

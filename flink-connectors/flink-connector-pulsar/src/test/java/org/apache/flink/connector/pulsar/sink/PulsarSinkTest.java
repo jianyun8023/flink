@@ -55,7 +55,7 @@ public class PulsarSinkTest extends PulsarTestSuiteBase {
         operator().admin().topics().createSubscription(topic, "test", MessageId.earliest);
 
         final PulsarSink<String> sink =
-                PulsarSink.builder()
+                PulsarSink.<String> builder()
                         .setServiceUrl(operator().serviceUrl())
                         .setAdminUrl(operator().adminUrl())
                         .setTopic(topic)

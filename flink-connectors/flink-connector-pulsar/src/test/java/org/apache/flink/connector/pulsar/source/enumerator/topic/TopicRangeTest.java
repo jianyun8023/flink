@@ -18,11 +18,12 @@
 
 package org.apache.flink.connector.pulsar.source.enumerator.topic;
 
+import org.apache.flink.connector.pulsar.common.topic.TopicRange;
 import org.apache.flink.util.InstantiationUtil;
 
 import org.junit.jupiter.api.Test;
 
-import static org.apache.flink.connector.pulsar.source.enumerator.topic.TopicRange.MAX_RANGE;
+import static org.apache.flink.connector.pulsar.common.topic.TopicRange.MAX_RANGE;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

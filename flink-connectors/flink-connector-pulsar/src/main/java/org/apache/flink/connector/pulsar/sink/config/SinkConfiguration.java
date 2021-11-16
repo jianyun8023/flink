@@ -18,6 +18,7 @@
 
 package org.apache.flink.connector.pulsar.sink.config;
 
+import org.apache.flink.annotation.Internal;
 import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.Configuration;
 
@@ -26,10 +27,9 @@ import java.io.Serializable;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_FAIL_ON_WRITE;
 import static org.apache.flink.connector.pulsar.sink.PulsarSinkOptions.PULSAR_TRANSACTION_TIMEOUT_MILLIS;
 
-/** The configure class for pulsar sink. */
-@PublicEvolving
-public class SinkConfiguration implements Serializable {
-    private static final long serialVersionUID = 8488507275800787580L;
+/** The configured class for pulsar sink. */
+@Internal
+public class SinkConfiguration {
 
     /**
      * This option is used to set whether to throw an exception to trigger a termination or retry of
